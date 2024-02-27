@@ -1,0 +1,45 @@
+prcAPI:
+  host: "localhost"
+  port: "8084"
+
+
+
+SSOTDatabase:
+  host: "localhost"
+  port: "3306"
+  userName: "root"
+  password: "root"
+  databaseName: "sample"
+  
+
+  
+batch:
+  size: "2"
+  AggregratorSize: "2"
+    
+emailSMTP:
+  host: "smtp.gmail.com"
+  port: "587"
+  user: "mahlietnigatu08@gmail.com"
+  password: "vmmgetatrykskbdz"
+  fromAddress: "mahlietnigatu08@gmail.com"
+  toAddress: "mahlietnigatu08@gmail.com"
+
+schedular: 
+  frequency : "1"
+  delay : "1"
+
+#file:
+ # location :  "C:\PROJECT\TestData"
+ 
+
+  
+sysAPI :
+  host: "localhost"
+  port: "8084"
+  account : "/api/v1/account" 
+  phone : "/api/v1/phone"
+  address : "/api/v1/address"
+  email : "/api/v1/email " 
+  balance : "/api/v1/balance"
+  disbursment : "/api/v1/disbursment"

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:spring="http://www.mulesoft.org/schema/mule/spring"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+
+
+	<flow name="balanceImpl" doc:id="1a223804-83d2-49a1-a01f-f3518d13febf" >
+		<logger level="INFO" doc:name="Logger" doc:id="ad0c84bd-31b7-488c-afda-f1279c45f64b" message="==================balance flow start=================="/>
+<db:select doc:name="getWaterMark" doc:id="c63f4a3a-93f7-4470-a9d0-2f1241bfe155" config-ref="InmermoryDB">
+
+			<db:sql ><![CDATA[SELECT LastRun FROM sample.watermark where objName = 'balance']]></db:sql>
+
+		</db:select>
+		
+		<ee:transform doc:name="WaterMarkVariable" doc:id="6b87cb9f-907f-4b8f-93e1-1c74fe681864" >
+
+			<ee:message >
+
+			</ee:message>
+
+			<ee:variables >
+				<ee:set-variable variableName="lastRunBalance" ><![CDATA[payload.LASTRUN[0] as String]]></ee:set-variable>
+
+			
+</ee:variables>
+
+		</ee:transform>
+		
+		<db:select doc:name="getbalance" doc:id="ce972ff9-81db-4ffc-a7e7-4a76dca863c5" config-ref="InmermoryDB">
+
+			<db:sql ><![CDATA[SELECT *
+
+FROM sample.balanceview where dateUpdated >= :lastRun]]></db:sql>
+
+			<db:input-parameters ><![CDATA[#[{
+
+'lastRun' : vars.lastRunBalance
+
+
+
+}]]]></db:input-parameters>
+
+		</db:select>
+
+		<ee:transform doc:name="Transform Message" doc:id="fd918e23-1778-4c4f-a79a-6f3f073c7bca" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (item, index)->
+ {
+ "account":                 item.ACCOUNT,
+ "balance":            	item.BALANCE,
+ "update":            	item.DATEUPDATED
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e383c7ed-70b7-46bb-b0a4-8d4839f4dfd9" message="==================call Batch process=================="/>
+		<choice doc:name="Choice" doc:id="a295a420-b896-4659-9a56-47d7de86cdfe" >
+			<when expression="#[sizeOf(payload) &gt;0]">
+				<flow-ref doc:name="balanceBatch" doc:id="65a95993-464e-445e-96c1-5abfa5c4e557" name="balanceBatch" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="0f6b5977-87dc-4501-a434-c325de9963eb" message="-------------------------No Records found-----------------------------"/>
+				<db:update doc:name="Update" doc:id="971572b8-6fcb-419c-87da-016bc0f6dc31" config-ref="InmermoryDB">
+					<db:sql ><![CDATA[UPDATE sample.watermark 
+set LastRun = :LastRun 
+where objName = 'balance']]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+
+	'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"}) as String
+
+}]]]></db:input-parameters>
+				</db:update>
+			</otherwise>
+		</choice>
+		
+	
+</flow>
+	<flow name="balanceBatch" doc:id="8e889fd8-7ed7-4d25-b2f2-97acf111e6be">
+
+		<batch:job jobName="balanceBatch_Job" doc:id="fff794bb-ad01-4782-952c-68a7635b9eaa" blockSize="${batch.size}" maxFailedRecords="-1">
+
+			<batch:process-records>
+				<batch:step name="Batch_Step" doc:id="449347bb-f5d8-49ec-91b9-ac8521437a90">
+
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="2938175f-4379-40e4-a8e3-0e82e769c1a5" size="${batch.AggregratorSize}">
+
+						<ee:transform doc:name="SysAPIRequest" doc:id="4015b404-929b-4e43-9750-58a152f91533">
+
+							<ee:message>
+
+								<ee:set-payload><![CDATA[%dw 2.0
+
+output application/json
+
+---
+
+payload]]></ee:set-payload>
+
+							</ee:message>
+
+						</ee:transform>
+						<http:request method="POST" doc:name="Request" doc:id="8d620d4a-e422-42ed-acf2-dc4611ec95ec" path="${sysAPI.balance}" config-ref="SysAPI_config" >
+							<http:headers ><![CDATA[#[output application/java
+---
+{
+	"name" : "Balance"
+}]]]></http:headers>
+						</http:request>
+
+					</batch:aggregator>
+
+				</batch:step>
+
+			</batch:process-records>
+			<batch:on-complete >
+				<choice doc:name="Choice" doc:id="73cc93be-d51e-4a39-80ad-d8d3efdb79df">
+			<when expression="#[payload.failedRecords != payload.totalRecords]">
+				<db:update doc:name="Update" doc:id="c6c7e6cb-9087-4e3c-96df-692c176fb3a9" config-ref="InmermoryDB">
+					<db:sql><![CDATA[UPDATE sample.watermark 
+set LastRun = :LastRun 
+where objName = 'balance']]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+
+	'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"}) as String
+
+}]]]></db:input-parameters>
+				</db:update>
+				<logger level="INFO" doc:name="Logger" doc:id="15c8835f-088e-46e2-b2c9-cf1e4deb36f2" message="==================phone flow end==================" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="c0d52ee0-0f6b-4758-acfd-fad9bedaf1d3" message="-----Failed to excute the job----------------" />
+			</otherwise>
+		</choice>
+			</batch:on-complete>
+
+		
+</batch:job>
+
+	
+</flow>
+	
+	
+	</mule>
