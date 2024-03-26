@@ -12,10 +12,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">		
-	<http:request-config name="SysAPI_config" doc:name="HTTP Request configuration" doc:id="e3f03000-119a-46e4-8506-b3f00e35da7c" >
-		<http:request-connection host="${sysAPI.host}" port="${sysAPI.port}" />
-	</http:request-config>
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">
 	<configuration doc:name="Configuration" doc:id="8e49dac7-e913-414c-b736-e58f8bb9322c" defaultErrorHandler-ref="Error_Handler_global" />
 	
 	<email:smtp-config name="emailSMTP" doc:name="Email SMTP" doc:id="2049e8fe-8f4a-4009-ba23-dfb8afadec5b" >
@@ -25,20 +22,13 @@ http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/s
 			</email:properties>
 		</email:smtp-connection>
 	</email:smtp-config>
-	<spring:config name="Spring_Config" doc:name="Spring Config" doc:id="8703d363-e3ed-40c8-9940-df37055043bc" files="springbeans.xml" />
-	<db:config name="InmermoryDB" doc:name="Database Config" doc:id="92a73913-4ba0-4001-98b8-c7430be9b9a7" >
-		<db:generic-connection url="jdbc:derby:memory:sample" driverClassName="org.apache.derby.jdbc.EmbeddedDriver" />
-	</db:config>
+	<db:config name="SSOTDB" doc:name="Database Config" doc:id="92a73913-4ba0-4001-98b8-c7430be9b9a7" >
+		<db:mssql-connection host="${SSOTDatabase.host}" port="${SSOTDatabase.port}" user="${SSOTDatabase.userName}" password="${SSOTDatabase.password}" databaseName="${SSOTDatabase.databaseName}" />
+	
+</db:config>
 	<configuration-properties doc:name="Configuration properties" doc:id="7ec1b98d-919b-4d30-9de3-9aa6092d79a1" file="config/app_dev.yaml" />
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="237430af-9d7f-4053-8453-946ae6b1d702" >
 		<http:listener-connection host="${prcAPI.host}" port="${prcAPI.port}" />
 	</http:listener-config>
-	<file:config name="File_Config" doc:name="File Config" doc:id="ed3f5c9f-a66b-4c9c-98a2-03cffc17e73e" >
-		<file:connection workingDir="C:\PROJECT\TestData" />
-	</file:config>
-		<vm:config name="VM_Config" doc:name="VM Config" doc:id="eb7bd654-4653-4dd0-94e8-5fa51f4a6cbe" >
-		<vm:queues >
-			<vm:queue queueName="jobstatus" />
-		</vm:queues>
-	</vm:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="4747938d-9090-4f88-a33d-c9fec4432d10" file="config\app_dev.yaml" />
 </mule>

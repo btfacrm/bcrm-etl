@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:spring="http://www.mulesoft.org/schema/mule/spring"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+
+	<flow name="accountImpl" doc:id="5258df27-5452-408a-8bb3-dc48e2525da8" >
+		<logger level="INFO" doc:name="Logger" doc:id="61a3e0ed-9c79-4e2e-bb06-93c7e16ce8a9" message="Account Flow Start"/>
+		<db:select doc:name="getWaterMark" doc:id="58b61e34-3e8d-48e5-87bf-245c85715e9c" config-ref="SSOTDB">
+
+			<db:sql ><![CDATA[SELECT LastRun FROM sample.watermark where objName = 'account']]></db:sql>
+
+		</db:select>
+		<ee:transform doc:name="WaterMarkVariable" doc:id="58bd09e9-34a3-4889-b80e-50c17b7d2258" >
+
+			<ee:message >
+
+			</ee:message>
+
+			<ee:variables >
+				<ee:set-variable variableName="lastRunAcc" ><![CDATA[payload.LASTRUN[0] as String]]></ee:set-variable>
+
+			</ee:variables>
+
+		</ee:transform>
+
+		<db:select doc:name="getAccounts" doc:id="08eeac9a-e9bb-46a8-9cdb-687bf5bbde7d" config-ref="SSOTDB">
+
+			<db:sql ><![CDATA[SELECT *
+
+FROM sample.accountview where validFrom >= :lastRun]]></db:sql>
+
+			<db:input-parameters ><![CDATA[#[{
+
+'lastRun' : vars.lastRunAcc
+
+
+
+}]]]></db:input-parameters>
+
+		</db:select>
+
+		<ee:transform doc:name="Transform Message" doc:id="2f6d0fa6-cb5d-41a6-a30e-3f731e5f1d10" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (item, index)->
+ {
+ 
+ "account":                 item.ACCOUNT,
+ "contactId":            	item.CONTACTID,
+ "firstName":            	item.FIRSTNAME,
+ "lastName":             	item.LASTNAME,
+ "name":                 	item.NAME,
+ "ssn":                  	item.SSN,
+ "motherMaidenName":         item.motherMaidenName,
+ "dateOfBirth":              item.dateOfBirth,
+ "agencyCode":           	item.AGENCYCODE,
+ "agencyDescription":    	item.AGENCYDESCRIPTION,
+ "regionCode":           	item.REGIONCODE,
+ "regionDescription":    	item.REGIONDESCRIPTION,
+ "tribeCode":            	item.TRIBECODE,
+ "tribeDescription":     	item.TRIBEDESCRIPTION,
+ "tribeEnrollment": item.tribeEnrollment,
+ "tierLevelCode":        	item.TIERLEVELCODE,
+ "tierLevelDescription": 	item.TIERLEVELDESCRIPTION,
+ "freezeCode":           	item.FREEZECODE,
+ "freezeDescription":    	item.FREEZEDESCRIPTION,
+ "typeCode":             	item.TYPECODE,
+ "typeDescription":      	item.TYPEDESCRIPTION,
+ "categoryCode":         	item.CATEGORYCODE,
+ "categoryDescription":  	item.CATEGORYDESCRIPTION,
+ "update" : item.validFrom
+ 
+ 
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="62b426ca-5d18-46e8-969c-6e03cb9841fc" >
+			<when expression="#[sizeOf(payload) &gt;0]">
+				<logger level="INFO" doc:name="Logger" doc:id="7d55f992-1246-4eaa-951d-30d46a945857" message="Execute Account Batch flow" />
+				<flow-ref doc:name="accountBatch" doc:id="b235cb80-eb9e-4f98-8c10-a92044e37f9b" name="accountBatch" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="2660386d-c57e-491d-b14f-6b316ccebd51" message="No Records found in Account view"/>
+				<db:update doc:name="Update" doc:id="414d92ef-9085-49f1-a233-24ab3af42ecd" config-ref="SSOTDB">
+					<db:sql ><![CDATA[UPDATE sample.watermark 
+set LastRun = :LastRun
+where OBJNAME = 'account']]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+
+	'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"})as String
+
+}]]]></db:input-parameters>
+				</db:update>
+			</otherwise>
+		</choice>
+		
+	
+</flow>
+	<flow name="accountBatch" doc:id="b87ecd92-b22d-4b6a-b8fb-7b9415cd5d03">
+		<batch:job jobName="accountimplBatch_Job" doc:id="acd76042-022f-4d43-a9e3-744c9a7196d7" blockSize="${batch.size}" maxFailedRecords="-1">
+			<batch:process-records >
+				<batch:step name="successRecords" doc:id="bb161402-03dc-497a-a938-ad5c99462cf6" >
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="1a29680c-520b-4082-9d77-c25501257d12" size="${batch.aggregratorSize}">
+						<ee:transform doc:name="Transform Message" doc:id="8fbb029d-8d5c-4913-9487-741dda438ea9" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+	payload
+]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<http:request method="POST" doc:name="Request" doc:id="ed1934ca-2391-415e-9d23-6282c98d5f1e" url="${sysAPI.baseUrl}${sysAPI.account}" responseTimeout="${sysAPI.responseTimeout}" sendCorrelationId="ALWAYS">
+							<http:headers><![CDATA[#[{ 
+
+        "client_id": Mule::p('sysAPI.client_id'),
+        "client_secret": Mule::p('sysAPI.client_secret')
+
+}]]]></http:headers>
+						</http:request>
+					</batch:aggregator>
+					<ee:transform doc:name="Transform Message" doc:id="38099e86-8799-4580-a045-dbc106643aac" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				
+</batch:step>
+				<batch:step name="failedRecords" doc:id="80f78b6d-4055-4c84-8025-e48f2d365a02" acceptPolicy="ONLY_FAILURES">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="fcb93ce5-bae5-4f4a-9af0-a3c70f30e149" streaming="true">
+						<ee:transform doc:name="Transform Message" doc:id="c9bf8260-4f7a-4d2b-a6ba-97a5a644b97e">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.account
+
+
+]]></ee:set-payload>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="MailSubject" ><![CDATA['Account Flow Fail Alert']]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="generate_EmailAlert" doc:id="ca45f8d7-ec80-4e86-9554-31061eff418f" name="generate_EmailAlert" />
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<choice doc:name="Choice" doc:id="7b792dc5-458c-4de6-960c-9e5f3debd173">
+					<when expression="#[payload.failedRecords == payload.totalRecords]">
+						<logger level="INFO" doc:name="Logger" doc:id="379f49ff-9887-4677-a172-fcdb7711fa0c" message="Phone Flow Failed to process" />
+						<ee:transform doc:name="Transform Message" doc:id="1511de80-4096-4099-94cc-4ed7ae6dc3a8">
+							<ee:message>
+								<ee:set-payload><![CDATA["Account System API is not reachable"
+
+
+
+
+
+
+
+]]></ee:set-payload>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="MailSubject"><![CDATA['Account Flow Fail Alert']]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<flow-ref doc:name="generate_EmailAlert" doc:id="3c9e8f89-9285-44c2-bdf8-dcaa84ddd6c0" name="generate_EmailAlert" />
+					
+</when>
+					<otherwise>
+						<db:update doc:name="UpdateWaterMark" doc:id="2396cc53-d64e-49c4-8668-c3c4ed507c25" config-ref="SSOTDB">
+
+			<db:sql><![CDATA[UPDATE sample.watermark 
+set LastRun = :LastRun
+where OBJNAME = 'account']]></db:sql>
+
+			<db:input-parameters><![CDATA[#[{
+
+	'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"})as String
+
+}]]]></db:input-parameters>
+
+		</db:update>
+						<logger level="INFO" doc:name="Logger" doc:id="443ba492-2c19-4e03-b9cb-72c38decf0bd" message="Account Flow End" />
+
+					</otherwise>
+				
+</choice>
+			</batch:on-complete>
+		</batch:job>
+
+
+	
+</flow>
+	
+	
+	
+</mule>

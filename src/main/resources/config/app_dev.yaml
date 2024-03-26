@@ -1,21 +1,22 @@
 prcAPI:
   host: "localhost"
   port: "8084"
+  path: "/api/v1/data-sync"
 
 
 
 SSOTDatabase:
-  host: "localhost"
-  port: "3306"
-  userName: "root"
-  password: "root"
-  databaseName: "sample"
+  host: "btfa-test.database.windows.net"
+  port: "1433"
+  userName: "CloudSAf0100f5c"
+  password: "BTFAat8520"
+  databaseName: "sqlserver"
   
 
   
 batch:
   size: "2"
-  AggregratorSize: "2"
+  aggregratorSize: "2"
     
 emailSMTP:
   host: "smtp.gmail.com"
@@ -26,20 +27,28 @@ emailSMTP:
   toAddress: "mahlietnigatu08@gmail.com"
 
 schedular: 
-  frequency : "1"
+  frequency : "30"
   delay : "1"
 
-#file:
- # location :  "C:\PROJECT\TestData"
  
 
   
 sysAPI :
-  host: "localhost"
-  port: "8084"
-  account : "/api/v1/account" 
+  client_secret: "D45bad6614504992Bd279CC3e5F216D7"
+  client_id: "57a50ee6528c49b09e584298cea860e4"
+  baseUrl: "https://bcrm-salesforce-sapi-dev.usg-w1.gov.cloudhub.io"
+  account : "/api/account" 
   phone : "/api/v1/phone"
   address : "/api/v1/address"
   email : "/api/v1/email " 
   balance : "/api/v1/balance"
   disbursment : "/api/v1/disbursment"
+  responseTimeout : "300000"
+  
+
+  
+  
+  
+ 
+  
+  

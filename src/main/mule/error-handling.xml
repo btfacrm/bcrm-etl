@@ -23,13 +23,16 @@ output application/json
 	
 }]]></ee:set-payload>
 					</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="MailSubject" ><![CDATA['Data Sync Application Fail Alert']]></ee:set-variable>
+				</ee:variables>
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference" doc:id="6f490f1f-fb6b-46c4-93d3-83e0c7aa94eb" name="generate_EmailAlert"/>
 			</on-error-propagate>
 		</error-handler>
 				<sub-flow name="generate_EmailAlert" doc:id="6e790215-ed66-4673-9a8a-eeafe642600e" >
 		<logger level="INFO" doc:name="Logger" doc:id="9762c686-d5a8-44e8-ad49-19d4f49e941b" message="---------------------------Send email--------------"/>
-		<email:send doc:name="Send" doc:id="68e42906-0cd5-46be-b2e8-eb98862f06ac" config-ref="emailSMTP" fromAddress="${emailSMTP.fromAddress}" subject="Mule-Alert">
+		<email:send doc:name="Send" doc:id="68e42906-0cd5-46be-b2e8-eb98862f06ac" config-ref="emailSMTP" fromAddress="${emailSMTP.fromAddress}" subject="#[vars.MailSubject]">
 			<email:to-addresses >
 				<email:to-address value="${emailSMTP.toAddress}" />
 			</email:to-addresses>

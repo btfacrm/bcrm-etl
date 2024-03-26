@@ -6,7 +6,7 @@
 	<artifactId>btf-email-prc-v1</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>mule-application</packaging>
-	<name>btf-datasync-prc-v3</name>
+	<name>btf-datasync-prc-v1</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -29,10 +29,6 @@
 				<extensions>true</extensions>
 				<configuration>
 					<sharedLibraries>
-						<sharedLibrary>
-							<groupId>mysql</groupId>
-							<artifactId>mysql-connector-java</artifactId>
-						</sharedLibrary>
 						<sharedLibrary>
 							<groupId>org.apache.derby</groupId>
 							<artifactId>derby</artifactId>
@@ -69,6 +65,10 @@
 							<groupId>org.springframework.security</groupId>
 							<artifactId>spring-security-crypto</artifactId>
 						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>com.microsoft.sqlserver</groupId>
+							<artifactId>mssql-jdbc</artifactId>
+						</sharedLibrary>
 					</sharedLibraries>
 				</configuration>
 			</plugin>
@@ -93,11 +93,6 @@
 			<artifactId>mule-db-connector</artifactId>
 			<version>1.14.6</version>
 			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.30</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
@@ -172,16 +167,9 @@
 			<version>5.1.0.RELEASE</version>
 		</dependency>
 		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-file-connector</artifactId>
-			<version>1.5.1</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-vm-connector</artifactId>
-			<version>2.0.0</version>
-			<classifier>mule-plugin</classifier>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<version>7.0.0.jre8</version>
 		</dependency>
 	</dependencies>
 
