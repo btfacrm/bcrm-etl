@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 	<flow name="emailImpl" doc:id="5258df27-5452-408a-8bb3-dc48e2525da8" >
 		<logger level="INFO" doc:name="Logger" doc:id="61a3e0ed-9c79-4e2e-bb06-93c7e16ce8a9" message="==================email flow starts=================="/>
 
-		<db:select doc:name="getWaterMark" doc:id="58b61e34-3e8d-48e5-87bf-245c85715e9c" config-ref="InmermoryDB">
+		<db:select doc:name="getWaterMark" doc:id="58b61e34-3e8d-48e5-87bf-245c85715e9c" config-ref="SSOTDB">
 
 			<db:sql ><![CDATA[SELECT LastRun FROM sample.watermark where objName = 'email']]></db:sql>
 
@@ -46,7 +46,7 @@ output application/java
 
 		<logger level="INFO" doc:name="Logger" doc:id="ae60cab1-c0f5-4dce-bb06-acc56d732c90" message="#[vars.lastRun]"/>
 
-		<db:select doc:name="getEmails" doc:id="08eeac9a-e9bb-46a8-9cdb-687bf5bbde7d" config-ref="InmermoryDB">
+		<db:select doc:name="getEmails" doc:id="08eeac9a-e9bb-46a8-9cdb-687bf5bbde7d" config-ref="SSOTDB">
 
 			<db:sql ><![CDATA[SELECT *
 
@@ -84,7 +84,7 @@ payload map (item, index)->
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="Logger" doc:id="2660386d-c57e-491d-b14f-6b316ccebd51" message="-------------------------No Records found-----------------------------"/>
-				<db:update doc:name="Update" doc:id="8aa2f699-a7e0-46b9-9e95-911c848d099a" config-ref="InmermoryDB">
+				<db:update doc:name="Update" doc:id="8aa2f699-a7e0-46b9-9e95-911c848d099a" config-ref="SSOTDB">
 					<db:sql ><![CDATA[UPDATE sample.watermark 
 set LastRun = :LastRun 
 where objName = 'email']]></db:sql>
@@ -123,7 +123,7 @@ payload ]]></ee:set-payload>
 							</ee:message>
 
 						</ee:transform>
-						<http:request method="POST" doc:name="Request" doc:id="ed1934ca-2391-415e-9d23-6282c98d5f1e" path="${sysAPI.email}" config-ref="SysAPI_config" >
+						<http:request method="POST" doc:name="Request" doc:id="ed1934ca-2391-415e-9d23-6282c98d5f1e" url="${sysAPI.baseUrl}/${sysAPI.email}">
 							<http:headers ><![CDATA[#[output application/java
 ---
 {
@@ -139,7 +139,7 @@ payload ]]></ee:set-payload>
 			<batch:on-complete >
 				<choice doc:name="Choice" doc:id="3127fcb4-9066-413a-ba0f-2673c16ece43">
 			<when expression="#[payload.failedRecords != payload.totalRecords]">
-				<db:update doc:name="UpdateWaterMark" doc:id="2396cc53-d64e-49c4-8668-c3c4ed507c25" config-ref="InmermoryDB">
+				<db:update doc:name="UpdateWaterMark" doc:id="2396cc53-d64e-49c4-8668-c3c4ed507c25" config-ref="SSOTDB">
 
 			<db:sql><![CDATA[UPDATE sample.watermark 
 set LastRun = :LastRun 

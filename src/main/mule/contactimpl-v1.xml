@@ -17,11 +17,11 @@ http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/s
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
 
 
-	<flow name="disbursmentImpl" doc:id="1a223804-83d2-49a1-a01f-f3518d13febf" >
-		<logger level="INFO" doc:name="Logger" doc:id="ad0c84bd-31b7-488c-afda-f1279c45f64b" message="Disbursment flow start"/>
+	<flow name="contactImpl" doc:id="1a223804-83d2-49a1-a01f-f3518d13febf" >
+		<logger level="INFO" doc:name="Logger" doc:id="ad0c84bd-31b7-488c-afda-f1279c45f64b" message="contact Flow Start"/>
 <db:select doc:name="getWaterMark" doc:id="c63f4a3a-93f7-4470-a9d0-2f1241bfe155" config-ref="SSOTDB">
 
-			<db:sql ><![CDATA[SELECT LastRun FROM sample.watermark where objName = 'disbursment']]></db:sql>
+			<db:sql ><![CDATA[SELECT LastRun FROM sample.watermark where objName = 'contact']]></db:sql>
 
 		</db:select>
 		
@@ -29,37 +29,40 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 
 			<ee:message >
 
+				<ee:set-payload ><![CDATA[%dw 2.0
+
+output application/java
+
+---
+
+{
+
+}]]></ee:set-payload>
+
 			</ee:message>
 
 			<ee:variables >
-				<ee:set-variable variableName="lastRunDisbursment" ><![CDATA[payload.LASTRUN[0] as String]]></ee:set-variable>
-				<ee:set-variable variableName="lastRunDis" ><![CDATA[%dw 2.0
-output application/java
----
-{
-}]]></ee:set-variable>
+				<ee:set-variable variableName="lastRuncontact" ><![CDATA[payload.LASTRUN[0] as String]]></ee:set-variable>
 
-			
-</ee:variables>
+			</ee:variables>
 
 		</ee:transform>
 		
-		<db:select doc:name="getDisbursment" doc:id="ce972ff9-81db-4ffc-a7e7-4a76dca863c5" config-ref="SSOTDB">
+		<db:select doc:name="getcontacts" doc:id="ce972ff9-81db-4ffc-a7e7-4a76dca863c5" config-ref="SSOTDB">
 
 			<db:sql ><![CDATA[SELECT *
 
-FROM sample.disbursmentview where validFrom >= :lastRun]]></db:sql>
+FROM sample.contactview where validFrom >= :lastRun]]></db:sql>
 
 			<db:input-parameters ><![CDATA[#[{
 
-'lastRun' : vars.lastRunDisbursment
+'lastRun' : vars.lastRuncontact
 
 
 
 }]]]></db:input-parameters>
 
 		</db:select>
-
 		<ee:transform doc:name="Transform Message" doc:id="fd918e23-1778-4c4f-a79a-6f3f073c7bca" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -67,26 +70,32 @@ output application/json
 ---
 payload map (item, index)->
  {
- "account":                 item.ACCOUNT,
- "transaction":            	item.TRANSACTIONNUMBER,
- "code":            	item.CODE,
- "amount" :              item.AMOUNT as Number,
- "date":                 item.validFrom
+ 
 
+ "contactId":            	item.CONTACTID,
+ "firstName":            	item.FIRSTNAME,
+ "lastName":             	item.LASTNAME,
+ "name":                 	item.NAME,
+ "ssn":                  	item.SSN,
+ "motherMaidenName":         item.motherMaidenName,
+ "dateOfBirth":              item.dateOfBirth,
+ "date" : item.validFrom
+ 
+ 
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<choice doc:name="Choice" doc:id="a295a420-b896-4659-9a56-47d7de86cdfe" >
 			<when expression="#[sizeOf(payload) &gt;0]">
-				<logger level="INFO" doc:name="Logger" doc:id="e383c7ed-70b7-46bb-b0a4-8d4839f4dfd9" message="Call Disbursment flow Batch process" />
-				<flow-ref doc:name="disbursmentBatch" doc:id="65a95993-464e-445e-96c1-5abfa5c4e557" name="disbursmentBatch" />
+				<logger level="INFO" doc:name="Logger" doc:id="e383c7ed-70b7-46bb-b0a4-8d4839f4dfd9" message="Call contact Flow Batch Process" />
+				<flow-ref doc:name="contactBatch" doc:id="65a95993-464e-445e-96c1-5abfa5c4e557" name="contactBatch" />
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="Logger" doc:id="0f6b5977-87dc-4501-a434-c325de9963eb" message="No Records found in Disbursment view"/>
+				<logger level="INFO" doc:name="Logger" doc:id="0f6b5977-87dc-4501-a434-c325de9963eb" message="No Records found in  contact view"/>
 				<db:update doc:name="Update" doc:id="971572b8-6fcb-419c-87da-016bc0f6dc31" config-ref="SSOTDB">
 					<db:sql ><![CDATA[UPDATE sample.watermark 
 set LastRun = :LastRun 
-where objName = 'disbursment']]></db:sql>
+where objName = 'contact']]></db:sql>
 					<db:input-parameters ><![CDATA[#[{
 
 	'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"}) as String
@@ -98,9 +107,9 @@ where objName = 'disbursment']]></db:sql>
 		
 	
 </flow>
-	<flow name="disbursmentBatch" doc:id="8e889fd8-7ed7-4d25-b2f2-97acf111e6be">
+	<flow name="contactBatch" doc:id="8e889fd8-7ed7-4d25-b2f2-97acf111e6be">
 
-		<batch:job jobName="disbursmentImplBatch_Job" doc:id="fff794bb-ad01-4782-952c-68a7635b9eaa" blockSize="${batch.size}" maxFailedRecords="-1">
+		<batch:job jobName="contactImplBatch_Job" doc:id="fff794bb-ad01-4782-952c-68a7635b9eaa" blockSize="${batch.size}" maxFailedRecords="-1">
 
 			<batch:process-records>
 				<batch:step name="Batch_Step" doc:id="449347bb-f5d8-49ec-91b9-ac8521437a90">
@@ -112,17 +121,14 @@ where objName = 'disbursment']]></db:sql>
 							<ee:message>
 
 								<ee:set-payload><![CDATA[%dw 2.0
-
 output application/json
-
 ---
-
 payload]]></ee:set-payload>
 
 							</ee:message>
 
 						</ee:transform>
-						<http:request method="POST" doc:name="Request" doc:id="8d620d4a-e422-42ed-acf2-dc4611ec95ec"  url="${sysAPI.baseUrl}${sysAPI.disbursment}" responseTimeout="${sysAPI.responseTimeout}" sendCorrelationId="ALWAYS">
+						<http:request method="POST" doc:name="Request" doc:id="8d620d4a-e422-42ed-acf2-dc4611ec95ec"  url=" ${sysAPI.baseUrl}${sysAPI.phone}" responseTimeout="${sysAPI.responseTimeout}" sendCorrelationId="ALWAYS">
 							<http:headers ><![CDATA[#[{
 
     
@@ -135,7 +141,7 @@ payload]]></ee:set-payload>
 						</http:request>
 
 					</batch:aggregator>
-					<ee:transform doc:name="Transform Message" doc:id="7824225f-a107-4570-9b42-697a1dcbcd54" >
+					<ee:transform doc:name="Transform Message" doc:id="4d4568d2-a2eb-43d6-9c49-895ab67011c9" >
 						<ee:message >
 							<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -146,23 +152,22 @@ payload]]></ee:set-payload>
 
 				
 </batch:step>
-<batch:step name="failedRecords" doc:id="62bddf53-3075-4803-a776-425bd9743a06" acceptPolicy="ONLY_FAILURES">
-					<batch:aggregator doc:name="Batch Aggregator" doc:id="4a593314-1b0d-4791-81ec-1c1f9aba2b21" streaming="true">
-						<ee:transform doc:name="Transform Message" doc:id="43eabf52-5424-4431-930a-a81a95ea30c0">
+<batch:step name="failedRecords" doc:id="d781b6db-6a26-4407-bb2c-abf55e0a87b7" acceptPolicy="ONLY_FAILURES">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="887d71ae-1661-41cf-8248-24dbd0074f28" streaming="true">
+						<ee:transform doc:name="Transform Message" doc:id="4081a62c-9589-43b2-980b-c0e58741e830">
 							<ee:message>
-								<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload.account
+								<ee:set-payload><![CDATA["Contact System API is not reachable"
+
+
 
 
 ]]></ee:set-payload>
 							</ee:message>
 							<ee:variables>
-								<ee:set-variable variableName="MailSubject" ><![CDATA['Disbursment Flow Fail Alert']]></ee:set-variable>
+								<ee:set-variable variableName="MailSubject" ><![CDATA['contact Flow Fail Alert']]></ee:set-variable>
 							</ee:variables>
 						</ee:transform>
-						<flow-ref doc:name="generate_EmailAlert" doc:id="15d917fa-aa04-48f1-85ab-89241102c0e9" name="generate_EmailAlert" />
+						<flow-ref doc:name="generate_EmailAlert" doc:id="9a7bb507-c3d0-4ad5-8486-15275d086102" name="generate_EmailAlert" />
 					</batch:aggregator>
 				</batch:step>
 
@@ -170,10 +175,11 @@ payload.account
 			<batch:on-complete >
 				<choice doc:name="Choice" doc:id="73cc93be-d51e-4a39-80ad-d8d3efdb79df">
 			<when expression="#[payload.failedRecords == payload.totalRecords]">
-						<logger level="INFO" doc:name="Logger" doc:id="c0d52ee0-0f6b-4758-acfd-fad9bedaf1d3" message="Disbursment flow failed process records" />
-<ee:transform doc:name="Transform Message" doc:id="f6b1e51d-57eb-4ca2-a2a1-264691f8a382">
+						<logger level="INFO" doc:name="Logger" doc:id="c0d52ee0-0f6b-4758-acfd-fad9bedaf1d3" message="contact Flow Failed to Process" />
+			<ee:transform doc:name="Transform Message" doc:id="c4a03f87-1fca-4a03-a9c5-66f1bb2466a7">
 							<ee:message>
-								<ee:set-payload><![CDATA["Disbursment System API is not reachable"
+								<ee:set-payload><![CDATA["Contact System API is not reachable and unable to execute the remaining flows"
+
 
 
 
@@ -181,23 +187,24 @@ payload.account
 ]]></ee:set-payload>
 							</ee:message>
 							<ee:variables>
-								<ee:set-variable variableName="MailSubject" ><![CDATA['Disbursment Flow Fail Alert']]></ee:set-variable>
+								<ee:set-variable variableName="MailSubject" ><![CDATA['contact Flow Fail Alert']]></ee:set-variable>
 							</ee:variables>
 						</ee:transform>
-						<flow-ref doc:name="generate_EmailAlert" doc:id="44847333-0a15-4924-a38f-2ab2b8c5fff5" name="generate_EmailAlert" />
-			</when>
+						<flow-ref doc:name="generate_EmailAlert" doc:id="1ed8c0df-e3b0-4935-9d1c-149b04f51dd4" name="generate_EmailAlert" />
+</when>
 					<otherwise>
 						<db:update doc:name="Update" doc:id="c6c7e6cb-9087-4e3c-96df-692c176fb3a9" config-ref="SSOTDB">
 					<db:sql><![CDATA[UPDATE sample.watermark 
 set LastRun = :LastRun 
-where objName = 'disbursment']]></db:sql>
+where objName = 'contact']]></db:sql>
 					<db:input-parameters><![CDATA[#[{
 
 	'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"}) as String
 
 }]]]></db:input-parameters>
 				</db:update>
-						<logger level="INFO" doc:name="Logger" doc:id="15c8835f-088e-46e2-b2c9-cf1e4deb36f2" message="Disbursment flow End" />
+						<logger level="INFO" doc:name="Logger" doc:id="15c8835f-088e-46e2-b2c9-cf1e4deb36f2" message="contact Flow End" />
+						<flow-ref doc:name="accountImpl" doc:id="7384c0e6-a046-47d5-8b8c-25f2e1f52d3a" name="accountImpl" />
 			
 </otherwise>
 		</choice>
