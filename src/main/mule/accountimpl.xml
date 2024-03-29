@@ -59,17 +59,6 @@ payload map (item, index)->
  
  "account":                 item.ACCOUNT,
  "contactId":            	item.CONTACTID,
- "firstName":            	item.FIRSTNAME,
- "lastName":             	item.LASTNAME,
- "name":                 	item.NAME,
- "ssn":                  	item.SSN,
- "agencyCode":           	item.AGENCYCODE,
- "agencyDescription":    	item.AGENCYDESCRIPTION,
- "regionCode":           	item.REGIONCODE,
- "regionDescription":    	item.REGIONDESCRIPTION,
- "tribeCode":            	item.TRIBECODE,
- "tribeDescription":     	item.TRIBEDESCRIPTION,
- "motherMaidenName":     	item.MOTHERMAIDENNAME,
  "tierLevelCode":        	item.TIERLEVELCODE,
  "tierLevelDescription": 	item.TIERLEVELDESCRIPTION,
  "freezeCode":           	item.FREEZECODE,
@@ -77,7 +66,20 @@ payload map (item, index)->
  "typeCode":             	item.TYPECODE,
  "typeDescription":      	item.TYPEDESCRIPTION,
  "categoryCode":         	item.CATEGORYCODE,
- "categoryDescription":  	item.CATEGORYDESCRIPTION
+ "categoryDescription":  	item.CATEGORYDESCRIPTION,
+ "line1":            		item.LINE1,
+ "line2":             		item.LINE2,
+ "line3":                 	item.LINE3,
+ "line4":                  	item.LINE4,
+ "adminOfficerId":          item.ADMINOFFICERID,
+ "adminOfficerName":    	item.ADMINOFFICERNAME,
+ "Activeflag":           	item.ACTIVEFLAG,
+ "openedDate":    			item.OPENEDDATE,
+ "closedDate":            	item.CLOSEDDATE,
+ "closedFlag":    		 	item.CLOSEDFLAG,
+ "statementDate":   	  	item.STATEMENTDATE,
+ "Date":     				item.validFrom
+ 
  
 }]]></ee:set-payload>
 			</ee:message>

@@ -75,11 +75,16 @@ payload map (item, index)->
  "contactId":            	item.CONTACTID,
  "firstName":            	item.FIRSTNAME,
  "lastName":             	item.LASTNAME,
+ "middleName":             	item.MIDDLEINITIAL,
  "name":                 	item.NAME,
+ "gender":                 	item.gender,
  "ssn":                  	item.SSN,
- "motherMaidenName":         item.motherMaidenName,
- "dateOfBirth":              item.dateOfBirth,
- "date" : item.validFrom
+ "ssnFlag":         		item.SSNFLAG,
+ "dateOfBirth":            	item.dateOfBirth,
+ "dageOfDeath":				item.DOD,
+ "activeFlag":				item.ACTIVEFLAG,
+ "disbersementflag":		item.DISBERSEMENTFlag,
+ "date" : 					item.validFrom
  
  
 }]]></ee:set-payload>
