@@ -45,6 +45,9 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 						<flow-ref doc:name="disbursmentImpl" doc:id="57330477-9bed-430b-9a72-4e108db71bb7" name="disbursmentImpl" />
 					
 </route>
+			<route >
+				<flow-ref doc:name="tribalImpl" doc:id="ba0da5a3-311d-41a5-90d3-ab7a08527cff" name="tribalImpl"/>
+			</route>
 				
 </scatter-gather>
 	</flow>
