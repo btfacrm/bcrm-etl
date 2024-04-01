@@ -15,23 +15,23 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
-	<flow name="balanceImpl" doc:id="1a223804-83d2-49a1-a01f-f3518d13febf" >
-		<logger level="INFO" doc:name="Logger" doc:id="ad0c84bd-31b7-488c-afda-f1279c45f64b" message="==================balance flow start=================="/>
-		<db:select doc:name="getWaterMark" doc:id="c63f4a3a-93f7-4470-a9d0-2f1241bfe155" config-ref="SSOTDB">
-			<db:sql ><![CDATA[SELECT LastRun FROM sample.watermark where objName = 'balance']]></db:sql>
+	<flow name="tribalImpl" doc:id="1a223804-83d2-49a1-a01f-f3518d13febf" >
+		<logger level="INFO" doc:name="Logger" doc:id="ad0c84bd-31b7-488c-afda-f1279c45f64b" message="==================disbursment flow starts=================="/>
+		<db:select doc:name="getWaterMark" doc:id="c63f4a3a-93f7-4470-a9d0-2f1241bfe155" config-ref="SSOTDB">	
+			<db:sql ><![CDATA[SELECT LastRun FROM sample.watermark where objName = 'TribalEnrollment']]></db:sql>
 		</db:select>		
 		<ee:transform doc:name="WaterMarkVariable" doc:id="6b87cb9f-907f-4b8f-93e1-1c74fe681864" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="lastRunBalance" ><![CDATA[payload.LASTRUN[0] as String]]></ee:set-variable>
+				<ee:set-variable variableName="lastRunDisbursment" ><![CDATA[payload.LASTRUN[0] as String]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>		
-		<db:select doc:name="getbalance" doc:id="ce972ff9-81db-4ffc-a7e7-4a76dca863c5" config-ref="SSOTDB">
+		<db:select doc:name="getDisbursment" doc:id="ce972ff9-81db-4ffc-a7e7-4a76dca863c5" config-ref="SSOTDB">
 			<db:sql ><![CDATA[SELECT *
-				FROM sample.balanceview where dateUpdated >= :lastRun]]></db:sql>
+				FROM sample.disbursmentview where dateUpdated >= :lastRun]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
-				'lastRun' : vars.lastRunBalance
+				'lastRun' : vars.lastRunDisbursment
 				}]]]></db:input-parameters>
 		</db:select>
 		<ee:transform doc:name="Transform Message" doc:id="fd918e23-1778-4c4f-a79a-6f3f073c7bca" >
@@ -41,33 +41,34 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 					---
 					payload map (item, index)->
 					 {
-					 "account":                 item.ACCOUNT,
-					 "balance":            	item.BALANCE,
-					 "update":            	item.DATEUPDATED
+					 "contactId":               item.CONTACTID,
+					 "tribeCode":            	item.TRIBECODE,
+					 "tribeName":            	item.TRIBENAME,
+					 "date":                 	item.validFrom
 					
 					}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="Logger" doc:id="e383c7ed-70b7-46bb-b0a4-8d4839f4dfd9" message="==================call Batch process=================="/>
 		<choice doc:name="Choice" doc:id="a295a420-b896-4659-9a56-47d7de86cdfe" >
 			<when expression="#[sizeOf(payload) &gt;0]">
-				<flow-ref doc:name="balanceBatch" doc:id="65a95993-464e-445e-96c1-5abfa5c4e557" name="balanceBatch" />
+				<logger level="INFO" doc:name="Logger" doc:id="e383c7ed-70b7-46bb-b0a4-8d4839f4dfd9" message="==================call Batch process==================" />
+				<flow-ref doc:name="tribalBatch" doc:id="65a95993-464e-445e-96c1-5abfa5c4e557" name="tribalBatch" />
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="Logger" doc:id="0f6b5977-87dc-4501-a434-c325de9963eb" message="-------------------------No Records found-----------------------------"/>
-				<db:update doc:name="Update" doc:id="971572b8-6fcb-419c-87da-016bc0f6dc31" config-ref="SSOTDB">
+				<db:update doc:name="Update" doc:id="971572b8-6fcb-419c-87da-016bc0f6dc31" >
 					<db:sql ><![CDATA[UPDATE sample.watermark 
 						set LastRun = :LastRun 
-						where objName = 'balance']]></db:sql>
+						where objName = 'TribalEnrollment']]></db:sql>
 					<db:input-parameters ><![CDATA[#[{
 							'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"}) as String
 						}]]]></db:input-parameters>
 				</db:update>
 			</otherwise>
-		</choice>		
+		</choice>	
 	</flow>
-	<flow name="balanceBatch" doc:id="8e889fd8-7ed7-4d25-b2f2-97acf111e6be">
-		<batch:job jobName="balanceBatch_Job" doc:id="fff794bb-ad01-4782-952c-68a7635b9eaa" blockSize="${batch.size}" maxFailedRecords="-1">
+	<flow name="tribalBatch" doc:id="8e889fd8-7ed7-4d25-b2f2-97acf111e6be">
+		<batch:job jobName="tribalImplBatch_Job" doc:id="fff794bb-ad01-4782-952c-68a7635b9eaa" blockSize="${batch.size}" maxFailedRecords="-1">
 			<batch:process-records>
 				<batch:step name="Batch_Step" doc:id="449347bb-f5d8-49ec-91b9-ac8521437a90">
 					<batch:aggregator doc:name="Batch Aggregator" doc:id="2938175f-4379-40e4-a8e3-0e82e769c1a5" size="2">
@@ -79,36 +80,35 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 									payload]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
-						<http:request method="POST" doc:name="Request" doc:id="8d620d4a-e422-42ed-acf2-dc4611ec95ec" url="${sysAPI.baseUrl}/${sysAPI.balance}">
+						<http:request method="POST" doc:name="Request" doc:id="8d620d4a-e422-42ed-acf2-dc4611ec95ec" url="${sysAPI.baseUrl}/${sysAPI.disbursment}">
 							<http:headers ><![CDATA[#[output application/java
 								---
 								{
-									"name" : "Balance"
+									"name" : "disbursment"
 								}]]]></http:headers>
 						</http:request>
 					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete >
-			<choice doc:name="Choice" doc:id="73cc93be-d51e-4a39-80ad-d8d3efdb79df">
-				<when expression="#[payload.failedRecords != payload.totalRecords]">
-				<db:update doc:name="Update" doc:id="c6c7e6cb-9087-4e3c-96df-692c176fb3a9" config-ref="SSOTDB">
-					<db:sql><![CDATA[UPDATE sample.watermark 
-						set LastRun = :LastRun 
-						where objName = 'balance']]></db:sql>
-					<db:input-parameters><![CDATA[#[{
-						'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"}) as String
-					}]]]></db:input-parameters>
-				</db:update>
-				<logger level="INFO" doc:name="Logger" doc:id="15c8835f-088e-46e2-b2c9-cf1e4deb36f2" message="==================phone flow end==================" />
-				</when>
-				<otherwise>
-					<logger level="INFO" doc:name="Logger" doc:id="c0d52ee0-0f6b-4758-acfd-fad9bedaf1d3" message="-----Failed to excute the job----------------" />
-				</otherwise>
-			</choice>
+				<choice doc:name="Choice" doc:id="73cc93be-d51e-4a39-80ad-d8d3efdb79df">
+					<when expression="#[payload.failedRecords != payload.totalRecords]">
+						<db:update doc:name="Update" doc:id="c6c7e6cb-9087-4e3c-96df-692c176fb3a9" config-ref="SSOTDB">
+							<db:sql><![CDATA[UPDATE sample.watermark 
+								set LastRun = :LastRun 
+								where objName = 'TribalEnrollment']]></db:sql>
+							<db:input-parameters><![CDATA[#[{
+									'LastRun' : (now() as DateTime{format: "yyyy-MM-dd'T'HH:MM:ss"}) as String
+								}]]]></db:input-parameters>
+						</db:update>
+						<logger level="INFO" doc:name="Logger" doc:id="15c8835f-088e-46e2-b2c9-cf1e4deb36f2" message="==================disbursment flow end==================" />
+					</when>
+					<otherwise>
+						<logger level="INFO" doc:name="Logger" doc:id="c0d52ee0-0f6b-4758-acfd-fad9bedaf1d3" message="-----Failed to excute the disbursment job----------------" />
+					</otherwise>
+				</choice>
 			</batch:on-complete>
 		</batch:job>
 	</flow>
-	
 	
 	</mule>

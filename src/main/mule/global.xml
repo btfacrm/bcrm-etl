@@ -13,8 +13,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">
-	<configuration doc:name="Configuration" doc:id="8e49dac7-e913-414c-b736-e58f8bb9322c" defaultErrorHandler-ref="Error_Handler_global" />
-	
+	<configuration doc:name="Configuration" doc:id="8e49dac7-e913-414c-b736-e58f8bb9322c" defaultErrorHandler-ref="Error_Handler_global" />	
 	<email:smtp-config name="emailSMTP" doc:name="Email SMTP" doc:id="2049e8fe-8f4a-4009-ba23-dfb8afadec5b" >
 		<email:smtp-connection host="${emailSMTP.host}" user="${emailSMTP.user}" password="${emailSMTP.password}" port="${emailSMTP.port}">
 			<email:properties >
@@ -24,8 +23,7 @@ http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/s
 	</email:smtp-config>
 	<db:config name="SSOTDB" doc:name="Database Config" doc:id="92a73913-4ba0-4001-98b8-c7430be9b9a7" >
 		<db:mssql-connection host="${SSOTDatabase.host}" port="${SSOTDatabase.port}" user="${SSOTDatabase.userName}" password="${SSOTDatabase.password}" databaseName="${SSOTDatabase.databaseName}" />
-	
-</db:config>
+	</db:config>
 	<configuration-properties doc:name="Configuration properties" doc:id="7ec1b98d-919b-4d30-9de3-9aa6092d79a1" file="config/app_dev.yaml" />
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="237430af-9d7f-4053-8453-946ae6b1d702" >
 		<http:listener-connection host="${prcAPI.host}" port="${prcAPI.port}" />
